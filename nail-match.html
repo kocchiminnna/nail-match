@@ -986,8 +986,47 @@
             setTimeout(() => div.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
         }
 
+        // ============================================================
+        // カラーチャート（色選択肢）の生成
+        // ============================================================
+        const COLOR_PALETTES = [
+            { name: "Coral", hex: "#f8b195" }, { name: "Pink", hex: "#f67280" }, { name: "Rose", hex: "#c06c84" },
+            { name: "Berry", hex: "#6c5b7b" }, { name: "Lavendar", hex: "#a8e6cf" }, { name: "Mint", hex: "#dcedc1" },
+            { name: "Nude", hex: "#ffd3b6" }, { name: "Peach", hex: "#ffaaa5" }, { name: "Red", hex: "#ff8b94" },
+            { name: "Cream", hex: "#fcf8e3" }, { name: "Mocca", hex: "#e2d1c3" }, { name: "Cocoa", hex: "#d4a5a5" },
+            { name: "Sky", hex: "#a1c4fd" }, { name: "Ocean", hex: "#c2e9fb" }, { name: "Moss", hex: "#84af9b" },
+            { name: "Mustard", hex: "#fc9d9a" }, { name: "Sunset", hex: "#f9cdad" }, { name: "Smoke", hex: "#c8c8a9" },
+            { name: "Gray", hex: "#83af9b" }, { name: "Midnight", hex: "#355c7d" }
+        ];
+
+        function renderPalette() {
+            const container = document.getElementById('color-circles');
+            if (!container) return;
+            container.innerHTML = '';
+            COLOR_PALETTES.forEach(p => {
+                const btn = document.createElement('button');
+                btn.className = 'color-item-btn';
+                btn.style.backgroundColor = p.hex;
+                btn.onclick = () => {
+                    const rgb = hexToRgb(p.hex);
+                    sliderValues.r = rgb.r; sliderValues.g = rgb.g; sliderValues.b = rgb.b;
+                    // スライダー同期
+                    ['R', 'G', 'B'].forEach(c => {
+                        const v = sliderValues[c.toLowerCase()];
+                        const pct = (v / 255 * 100).toFixed(1) + '%';
+                        document.getElementById('fill' + c).style.width = pct;
+                        document.getElementById('thumb' + c).style.left = pct;
+                        document.getElementById('val' + c).textContent = v;
+                    });
+                    syncColorPreview();
+                };
+                container.appendChild(btn);
+            });
+        }
+
         // 初期化
-        updateColorPreview();
+        setLang('ja');
+        renderPalette();
     </script>
 </body>
 
