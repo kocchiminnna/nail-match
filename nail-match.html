@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1,user-scalable=no" />
+    <title>NailMatch</title>
+    <meta name="description" content="理想のネイル色から、自爪に乗せた時のカラーをシミュレーション。" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Noto+Sans+JP:wght@300;400;500&family=Noto+Sans+KR:wght@300;400;500&family=Inter:wght@200;300;400&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+    <script>tailwind.config = { theme: { extend: { colors: { 'brand-bg': '#F7F2F5', 'brand-gold': '#8C6D82', 'brand-dark': '#2D1A28', 'brand-bronze': '#7D4A6A' }, fontFamily: { 'script': ['"Great Vibes"', 'cursive'], 'sans-jp': ['"Noto Sans JP"', 'sans-serif'], 'sans-kr': ['"Noto Sans KR"', 'sans-serif'], 'sans': ['"Inter"', 'sans-serif'] } } } }</script>
+    <style>
+        * {
+            -webkit-tap-highlight-color: transparent;
+            box-sizing: border-box
+        }
+
+        body {
+            background-color: #FFE8E8;
+            background-image: url('nail_match_full_bg_1772780214875.png');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+            color: #2D1A28;
+            -webkit-font-smoothing: antialiased;
+            margin: 0;
+            min-height: 100vh
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(140, 109, 130, 0.15);
+            box-shadow: 0 30px 60px rgba(140, 109, 130, 0.08);
+            border-radius: 60px;
+            padding: 44px 32px
+        }
+
+        .jp {
+            letter-spacing: 0.15em
+        }
+
+        .slider-track {
+            position: relative;
+            height: 2px;
+            background: rgba(140, 109, 130, 0.1);
+            border-radius: 9999px;
+            cursor: pointer;
+            touch-action: none
+        }
+
+        .slider-fill {
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            background: rgba(140, 109, 130, 0.4);
+            border-radius: 9999px;
+            pointer-events: none
+        }
+
+        .slider-thumb {
+            height: 20px;
+            width: 20px;
+            background: white;
+            border: 2px solid #8C6D82;
+            border-radius: 50%;
+            box-shadow: 0 4px 8px rgba(140, 109, 130, 0.3);
+            position: absolute;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            cursor: pointer;
+            touch-action: none;
+            z-index: 2
+        }
+
+        .photo-drop {
+            border: 1px dashed rgba(140, 109, 130, 0.3);
+            border-radius: 40px;
+            padding: 44px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s
+        }
+
+        .photo-drop:active {
+            border-color: #7D4A6A
+        }
+
+        .coat-btn {
+            font-size: 10px;
+            font-family: 'Noto Sans JP', sans-serif;
+            letter-spacing: 0.1em;
+            padding: 6px 18px;
+            border-radius: 99px;
+            transition: all 0.2s;
+            cursor: pointer
+        }
+
+        .coat-btn.on {
+            background: #7D4A6A;
+            color: white;
+            border: 1px solid #7D4A6A
+        }
+
+        .coat-btn.off {
+            background: transparent;
+            color: rgba(140, 109, 130, 0.6);
+            border: 1px solid rgba(140, 109, 130, 0.25)
+        }
+
+        .tab-a {
+            color: #7D4A6A;
+            border-bottom: 2px solid #7D4A6A
+        }
+
+        .tab-i {
+            color: rgba(140, 109, 130, 0.4);
+            border-bottom: 2px solid transparent
+        }
+
+        .sec {
+            display: none
+        }
+
+        .sec.active {
+            display: block
+        }
+
+        canvas {
+            display: none
+        }
+
+        .result-card {
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(140, 109, 130, 0.1);
+            border-radius: 28px;
+            padding: 18px;
+            margin-bottom: 10px
+        }
+
+        .match-bar {
+            height: 3px;
+            border-radius: 2px;
+            background: rgba(140, 109, 130, 0.08)
+        }
+
+        .match-fill {
+            height: 100%;
+            border-radius: 2px;
+            background: linear-gradient(90deg, #E99AB8, #8C6D82)
+        }
+
+        .shop-btn {
+            font-size: 9px;
+            letter-spacing: 0.04em;
+            font-weight: 700;
+            padding: 4px 11px;
+            border-radius: 99px;
+            text-decoration: none;
+            transition: opacity 0.15s;
+            font-family: 'Inter', sans-serif;
+            display: inline-block
+        }
+
+        .shop-btn:hover {
+            opacity: 0.78
+        }
+
+        .shop-btn-qoo {
+            background: #FBF0F4;
+            color: #9B3A6A;
+            border: 1px solid #E8C4D0
+        }
+
+        .shop-btn-amz {
+            background: #FEF8EC;
+            color: #A07820;
+            border: 1px solid #ECD898
+        }
+
+        .fade-in {
+            animation: fi 0.35s ease
+        }
+
+        @keyframes fi {
+            from {
+                opacity: 0;
+                transform: translateY(8px)
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0)
+            }
+        }
+
+        .sim-circle {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            flex-shrink: 0
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex flex-col font-sans">
+
+    <header class="pt-10 pb-4 px-8 text-center relative overflow-hidden">
+        <div class="flex justify-end px-2 mb-4">
+            <div class="flex items-center bg-white/40 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/20">
+                <button onclick="setLang('ja')" id="lbja" class="px-2 text-[10px] font-medium transition-all"
+                    style="color:#7D4A6A">JP</button>
+                <span class="text-[10px] text-brand-gold/30">|</span>
+                <button onclick="setLang('en')" id="lben" class="px-2 text-[10px] font-light transition-all"
+                    style="color:rgba(140,109,130,0.5)">EN</button>
+                <span class="text-[10px] text-brand-gold/30">|</span>
+                <button onclick="setLang('ko')" id="lbko" class="px-2 text-[10px] font-light transition-all"
+                    style="color:rgba(140,109,130,0.5)">KR</button>
+            </div>
+        </div>
+        <div class="flex justify-center mb-6">
+            <h1 class="text-6xl font-script tracking-normal text-brand-dark drop-shadow-sm" style="font-weight: 400;">
+                NailMatch</h1>
+        </div>
+        <nav class="flex justify-center border-b border-brand-gold/10">
+            <div class="flex gap-14">
+                <button id="tabColor" onclick="showSec('color')"
+                    class="pb-4 text-[11px] font-sans-jp font-medium jp tab-a transition-colors t-tab-color">色から選ぶ</button>
+                <button id="tabPhoto" onclick="showSec('photo')"
+                    class="pb-4 text-[11px] font-sans-jp font-light jp tab-i transition-colors t-tab-photo">写真から選ぶ</button>
+            </div>
+        </nav>
+    </header>
+
+    <main class="flex-grow px-6 pb-16">
+
+        <!-- ===== TAB: 色から選ぶ ===== -->
+        <div id="sec-color" class="sec active">
+            <section class="card mt-4 mb-6">
+                <!-- 自爪の色設定 -->
+                <div class="flex items-center justify-between mb-8 px-4 py-3 rounded-3xl"
+                    style="background:rgba(140,109,130,0.05);border:1px solid rgba(140,109,130,0.1)">
+                    <div class="flex items-center gap-3">
+                        <div id="nailColorCircle"
+                            class="w-8 h-8 rounded-full border border-white shadow-sm cursor-pointer"
+                            style="background:#ecc5c4"></div>
+                        <span class="text-[10px] font-sans-jp font-medium jp t-label-nail-color"
+                            style="color:rgba(140,109,130,0.7)">自爪の色</span>
+                    </div>
+                    <span id="nailColorHexLabel" class="text-[10px] font-sans tracking-widest"
+                        style="color:rgba(140,109,130,0.5)">#ECC5C4</span>
+                    <input type="color" id="nailColorPicker" value="#ecc5c4" class="opacity-0 absolute w-0 h-0">
+                </div>
+                <!-- カラーサークル -->
+                <div class="flex items-center justify-center mb-8">
+                    <div class="relative">
+                        <div class="border border-dashed rounded-full" style="border-color:#8C6D82;padding:16px">
+                            <div id="colorCircle" class="w-36 h-36 rounded-full shadow-inner cursor-pointer"
+                                style="background:#D4A0B8"></div>
+                        </div>
+                        <div id="colorHexLabel"
+                            class="absolute -bottom-5 left-1/2 -translate-x-1/2 bg-white px-5 py-1.5 rounded-full shadow-lg text-[11px] font-sans font-medium tracking-widest border"
+                            style="border-color:#F7F2F5">#D4A0B8</div>
+                    </div>
+                </div>
+                <div class="text-center mb-10">
+                    <p class="text-[10px] jp italic font-sans-jp t-hint-ideal-color"
+                        style="color:rgba(140,109,130,0.6)">理想の仕上がり色を選択</p>
+                    <input type="color" id="nativePicker" value="#D4A0B8" class="opacity-0 absolute w-0 h-0">
+                </div>
+                <!-- RGB -->
+                <div class="space-y-8 px-4 mb-10">
+                    <div class="flex items-center gap-6"><span class="text-[10px] font-serif-en w-4"
+                            style="color:rgba(140,109,130,0.7)">R</span>
+                        <div class="flex-grow slider-track" id="trackR">
+                            <div class="slider-fill" id="fillR" style="width:83%"></div>
+                            <div class="slider-thumb" id="thumbR" style="left:83%"></div>
+                        </div><span class="text-[10px] font-sans w-8 text-right font-light" id="valR"
+                            style="color:rgba(140,109,130,0.5)">212</span>
+                    </div>
+                    <div class="flex items-center gap-6"><span class="text-[10px] font-serif-en w-4"
+                            style="color:rgba(140,109,130,0.7)">G</span>
+                        <div class="flex-grow slider-track" id="trackG">
+                            <div class="slider-fill" id="fillG" style="width:63%"></div>
+                            <div class="slider-thumb" id="thumbG" style="left:63%"></div>
+                        </div><span class="text-[10px] font-sans w-8 text-right font-light" id="valG"
+                            style="color:rgba(140,109,130,0.5)">160</span>
+                    </div>
+                    <div class="flex items-center gap-6"><span class="text-[10px] font-serif-en w-4"
+                            style="color:rgba(140,109,130,0.7)">B</span>
+                        <div class="flex-grow slider-track" id="trackB">
+                            <div class="slider-fill" id="fillB" style="width:72%"></div>
+                            <div class="slider-thumb" id="thumbB" style="left:72%"></div>
+                        </div><span class="text-[10px] font-sans w-8 text-right font-light" id="valB"
+                            style="color:rgba(140,109,130,0.5)">184</span>
+                    </div>
+                </div>
+                <!-- 塗り回数 -->
+                <div class="flex items-center justify-center gap-3 mb-8">
+                    <button id="btn1coat" class="coat-btn off t-coat-1" onclick="setCoat('1')">1度塗り</button>
+                    <button id="btn2coat" class="coat-btn on t-coat-2" onclick="setCoat('2')">2度塗り</button>
+                </div>
+                <!-- ライブプレビュー（丸） -->
+                <div class="mb-8">
+                    <p class="text-center text-[9px] font-sans-jp jp mb-4 t-preview-title"
+                        style="color:rgba(140,109,130,0.4)">この色にするには…
+                    </p>
+                    <div id="colorPreviewCircles" class="flex items-center justify-center gap-4"></div>
+                </div>
+                <!-- 注意事項 -->
+                <p class="text-[8px] font-sans-jp leading-relaxed mb-6 text-center t-disclaimer px-2"
+                    style="color:rgba(140,109,130,0.3)">
+                    ネイルの透明感や色味によって実際の仕上がりは異なるため参考程度にご覧ください。表示色はデバイス設定や光により実物と異なる場合があります。
+                </p>
+                <!-- 検索ボタン -->
+                <button onclick="searchFromColor()"
+                    class="w-full text-white py-6 rounded-full flex items-center justify-center gap-4 shadow-2xl transition-all active:scale-[0.98]"
+                    style="background:linear-gradient(135deg,#7D4A6A,#5C3050)">
+                    <span class="font-sans-jp text-[11px] tracking-[0.3em] font-medium t-search-btn">この色のポリッシュを検索</span>
+                    <span class="material-symbols-outlined text-lg font-light">arrow_forward_ios</span>
+                </button>
+            </section>
+            <!-- インライン結果 -->
+            <div id="colorResults" style="display:none" class="fade-in"></div>
+            <div class="text-center mt-4 mb-4">
+                <a href="https://x.com/gn0yCrb0ha65833" target="_blank"
+                    class="inline-flex items-center gap-1.5 text-[9px] font-sans" style="color:rgba(140,109,130,0.25)">
+                    <svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                            d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                    </svg>
+                    @gn0yCrb0ha65833
+                </a>
+            </div>
+        </div>
+
+        <!-- ===== TAB: 写真から選ぶ ===== -->
+        <div id="sec-photo" class="sec">
+            <section class="card mt-4 mb-6">
+                <div class="text-center mb-6">
+                    <p class="text-[10px] jp font-sans-jp t-photo-hint" style="color:rgba(140,109,130,0.6)">
+                        写真から理想のネイルカラーを抽出します</p>
+                </div>
+                <div id="photoDrop" class="photo-drop mb-4">
+                    <input type="file" id="photoInput" accept="image/*" class="hidden">
+                    <span class="material-symbols-outlined text-3xl block mb-3"
+                        style="color:rgba(140,109,130,0.25)">add_photo_alternate</span>
+                    <p class="text-[10px] font-sans-jp jp t-photo-drop" style="color:rgba(140,109,130,0.4)">タップして写真を選択
+                    </p>
+                </div>
+                <div id="photoPreviewWrap" style="display:none">
+                    <p class="text-[10px] font-sans-jp mb-3 text-center jp t-photo-tap"
+                        style="color:rgba(140,109,130,0.6)">
+                        理想のネイルカラー部分をタップ</p>
+                    <div
+                        style="border:1px dashed rgba(140,109,130,0.3);border-radius:40px;padding:8px;text-align:center">
+                        <canvas id="photoCanvas" style="display:none"></canvas>
+                        <img id="photoPreview" class="max-w-full max-h-[55vh] w-auto block mx-auto"
+                            style="cursor:crosshair;border-radius:34px">
+                    </div>
+                    <!-- 抽出色表示 -->
+                    <div id="photoExtracted" class="mt-5" style="display:none">
+                        <div class="flex items-center justify-center gap-4">
+                            <div class="border-dashed border rounded-full p-2" style="border-color:#8C6D82">
+                                <div id="photoExtractedSwatch" class="w-12 h-12 rounded-full shadow-inner"></div>
+                            </div>
+                            <div class="text-left">
+                                <p class="text-[9px] font-sans-jp jp t-label-extracted"
+                                    style="color:rgba(140,109,130,0.5)">抽出カラー</p>
+                                <p id="photoExtractedHex" class="text-[12px] font-sans font-medium tracking-widest"
+                                    style="color:#2D1A28"></p>
+                            </div>
+                        </div>
+                        <!-- 塗り回数 -->
+                        <div class="flex items-center justify-center gap-3 mt-5 mb-5">
+                            <button id="pbtn1coat" class="coat-btn off t-coat-1" onclick="setCoat('1')">1度塗り</button>
+                            <button id="pbtn2coat" class="coat-btn on t-coat-2" onclick="setCoat('2')">2度塗り</button>
+                        </div>
+                        <!-- プレビュー丸 -->
+                        <div class="mb-6">
+                            <p class="text-center text-[9px] font-sans-jp jp mb-4 t-preview-title"
+                                style="color:rgba(140,109,130,0.4)">
+                                この色にするには…</p>
+                            <div id="photoPreviewCircles" class="flex items-center justify-center gap-4"></div>
+                        </div>
+                        <!-- 注意事項 -->
+                        <p class="text-[8px] font-sans-jp leading-relaxed mb-6 text-center t-disclaimer px-2"
+                            style="color:rgba(140,109,130,0.3)">
+                            ネイルの透明感や色味によって実際の仕上がりは異なるため参考程度にご覧ください。表示色はデバイス設定や光により実物と異なる場合があります。
+                        </p>
+                        <button onclick="searchFromPhoto()"
+                            class="w-full text-white py-5 rounded-full flex items-center justify-center gap-4 shadow-xl transition-all active:scale-[0.98]"
+                            style="background:linear-gradient(135deg,#7D4A6A,#5C3050)">
+                            <span
+                                class="font-sans-jp text-[11px] tracking-[0.3em] font-medium t-search-btn">この色のポリッシュを検索</span>
+                            <span class="material-symbols-outlined text-lg font-light">arrow_forward_ios</span>
+                        </button>
+                    </div>
+                    <div class="flex gap-3 mt-4 justify-center">
+                        <button onclick="resetPhotoFull()"
+                            class="text-[9px] font-sans-jp jp border px-4 py-2 rounded-full active:scale-[0.98] transition-all flex items-center gap-1 t-other-photo"
+                            style="color:rgba(140,109,130,0.5);border-color:rgba(140,109,130,0.2)">
+                            <span class="material-symbols-outlined" style="font-size:12px">upload</span>別画像
+                        </button>
+                    </div>
+                </div>
+            </section>
+            <!-- インライン結果 -->
+            <div id="photoResults" style="display:none" class="fade-in"></div>
+            <div class="text-center mt-4 mb-4">
+                <a href="https://x.com/gn0yCrb0ha65833" target="_blank"
+                    class="inline-flex items-center gap-1.5 text-[9px] font-sans" style="color:rgba(140,109,130,0.25)">
+                    <svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                            d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                    </svg>
+                    @gn0yCrb0ha65833
+                </a>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // ============================================================
+        // ユーティリティ
+        // ============================================================
+        function hexToRgb(h) { return { r: parseInt(h.slice(1, 3), 16), g: parseInt(h.slice(3, 5), 16), b: parseInt(h.slice(5, 7), 16) } }
+        function rgbToHex(r, g, b) { return '#' + [r, g, b].map(v => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0')).join('') }
+        function clamp(v, mn, mx) { return Math.max(mn, Math.min(mx, v)) }
+
+        // ============================================================
+        // タブ切り替え
+        // ============================================================
+        let currentSec = 'color';
+        function showSec(id) {
+            currentSec = id;
+            document.querySelectorAll('.sec').forEach(el => {
+                el.style.display = 'none';
+                el.classList.remove('active');
+            });
+            const target = document.getElementById('sec-' + id);
+            if (target) {
+                target.style.display = 'block';
+                target.classList.add('active');
+            }
+
+            const isColor = id === 'color';
+            const tabC = document.getElementById('tabColor');
+            const tabP = document.getElementById('tabPhoto');
+
+            if (tabC && tabP) {
+                if (isColor) {
+                    tabC.classList.add('tab-a'); tabC.classList.remove('tab-i', 'font-light'); tabC.classList.add('font-medium');
+                    tabP.classList.add('tab-i'); tabP.classList.remove('tab-a', 'font-medium'); tabP.classList.add('font-light');
+                } else {
+                    tabP.classList.add('tab-a'); tabP.classList.remove('tab-i', 'font-light'); tabP.classList.add('font-medium');
+                    tabC.classList.add('tab-i'); tabC.classList.remove('tab-a', 'font-medium'); tabC.classList.add('font-light');
+                }
+            }
+
+            // Clear results when switching
+            const resC = document.getElementById('colorResults');
+            const resP = document.getElementById('photoResults');
+            if (resC) resC.style.display = 'none';
+            if (resP) resP.style.display = 'none';
+        }
+
+        // ============================================================
+        // 定数・状態
+        // ============================================================
+        let currentNailHex = '#ecc5c4';     // 自爪の色（可変）
+        let currentNailRgb = hexToRgb(currentNailHex);
+        let opacityMode = '2';
+        let sliderValues = { r: 212, g: 160, b: 184 };
+        let photoExtractedRgb = null;
+
+        // 不透明度計算（2度塗りは重ね塗り近似）
+        function getOpacity() {
+            const a = opacityMode === '2' ? 0.88 : 0.70;
+            if (opacityMode === '2') { const ia = 1 - 0.88; return 1 - ia * ia }
+            return a;
+        }
+
+        // 自爪 + ポリッシュ → 仕上がり色（顺方向）
+        function simulateNail(polishRgb) {
+            const a = getOpacity();
+            return {
+                r: clamp(currentNailRgb.r * (1 - a) + polishRgb.r * a, 0, 255),
+                g: clamp(currentNailRgb.g * (1 - a) + polishRgb.g * a, 0, 255),
+                b: clamp(currentNailRgb.b * (1 - a) + polishRgb.b * a, 0, 255)
+            }
+        }
+
+        // 理想の仕上がり色 → 買うべきポリッシュ色（逆算）
+        function calcTargetPolish(idealRgb) {
+            const a = getOpacity();
+            return {
+                r: clamp(Math.round((idealRgb.r - currentNailRgb.r * (1 - a)) / a), 0, 255),
+                g: clamp(Math.round((idealRgb.g - currentNailRgb.g * (1 - a)) / a), 0, 255),
+                b: clamp(Math.round((idealRgb.b - currentNailRgb.b * (1 - a)) / a), 0, 255)
+            }
+        }
+
+        // 色差（マッチ率計算）
+        function calcMatch(c1, c2) { return Math.max(0, 100 - Math.sqrt((c1.r - c2.r) ** 2 + (c1.g - c2.g) ** 2 + (c1.b - c2.b) ** 2) / 441.67 * 100) }
+
+        // ============================================================
+        // ネイルポリッシュDB（後で追加予定）
+        // ============================================================
+        let NAIL_DB = [];
+        async function loadDatabase() {
+            try {
+                const response = await fetch("./nail_db.json");
+                NAIL_DB = await response.json();
+                console.log("Database loaded:", NAIL_DB.length);
+            } catch (e) {
+                console.error("Failed to load database:", e);
+            }
+        }
+        loadDatabase();
+
+        // ============================================================
+        // プレビュー：自爪 ＋ 選ぶべきポリッシュ → 理想の色
+        // ============================================================
+        function circlesHtml(idealRgb) {
+            const polishRgb = calcTargetPolish(idealRgb);
+            const nHex = currentNailHex;
+            const iHex = rgbToHex(idealRgb.r, idealRgb.g, idealRgb.b);
+            const pHex = rgbToHex(polishRgb.r, polishRgb.g, polishRgb.b);
+            return `<div class="flex flex-col items-center gap-2">
+    <div class="sim-circle" style="background:${nHex}"></div>
+    <span class="text-[8px] font-sans-jp" style="color:rgba(140,109,130,0.45)">自爪</span>
+  </div>
+  <span class="material-symbols-outlined text-sm mb-4" style="color:rgba(140,109,130,0.25)">add</span>
+  <div class="flex flex-col items-center gap-2">
+    <div class="sim-circle" style="background:${pHex}"></div>
+    <span class="text-[8px] font-sans-jp" style="color:rgba(140,109,130,0.5)">選ぶべき色</span>
+  </div>
+  <span class="material-symbols-outlined text-sm mb-4" style="color:rgba(140,109,130,0.25)">arrow_forward</span>
+  <div class="flex flex-col items-center gap-2">
+    <div class="sim-circle" style="background:${iHex}"></div>
+    <span class="text-[8px] font-sans-jp font-medium" style="color:#7D4A6A">理想の色</span>
+  </div>`;
+        }
+
+        // ============================================================
+        // 塗り回数トグル
+        // ============================================================
+        function setCoat(v) {
+            opacityMode = v;
+            ['btn1coat', 'btn2coat', 'pbtn1coat', 'pbtn2coat'].forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                const n = id.includes('1') ? '1' : '2';
+                el.className = 'coat-btn ' + (n === v ? 'on' : 'off');
+            });
+            updateColorPreview();
+            updatePhotoPreviewCircles();
+        }
+
+        // ============================================================
+        // 色から選ぶ — スライダー・カラーピッカー
+        // ============================================================
+        document.getElementById('colorCircle').addEventListener('click', () => document.getElementById('nativePicker').click());
+        document.getElementById('nativePicker').addEventListener('input', e => {
+            const rgb = hexToRgb(e.target.value);
+            sliderValues.r = rgb.r; sliderValues.g = rgb.g; sliderValues.b = rgb.b;
+            ['r', 'g', 'b'].forEach(c => {
+                const pct = (sliderValues[c] / 255 * 100).toFixed(1) + '%';
+                document.getElementById('fill' + c.toUpperCase()).style.width = pct;
+                document.getElementById('thumb' + c.toUpperCase()).style.left = pct;
+                document.getElementById('val' + c.toUpperCase()).textContent = sliderValues[c];
+            });
+            syncColorPreview();
+        });
+
+        function syncColorPreview() {
+            const hex = rgbToHex(sliderValues.r, sliderValues.g, sliderValues.b);
+            document.getElementById('colorCircle').style.backgroundColor = hex;
+            document.getElementById('colorHexLabel').textContent = hex.toUpperCase();
+            document.getElementById('nativePicker').value = hex;
+            updateColorPreview();
+        }
+
+        function updateColorPreview() {
+            const el = document.getElementById('colorPreviewCircles');
+            if (el) el.innerHTML = circlesHtml({ r: sliderValues.r, g: sliderValues.g, b: sliderValues.b });
+        }
+
+        function initSlider(ch, thumbId, fillId, trackId, valId) {
+            const thumb = document.getElementById(thumbId), fill = document.getElementById(fillId), track = document.getElementById(trackId), valEl = document.getElementById(valId);
+            function upd(pct) { pct = clamp(pct, 0, 100); thumb.style.left = pct + '%'; fill.style.width = pct + '%'; sliderValues[ch] = Math.round(pct / 100 * 255); valEl.textContent = sliderValues[ch]; syncColorPreview() }
+            function pos(e) { const r = track.getBoundingClientRect(); const cx = e.touches ? e.touches[0].clientX : e.clientX; return clamp((cx - r.left) / r.width * 100, 0, 100) }
+            function start(e) { e.preventDefault(); upd(pos(e)); document.addEventListener('mousemove', mv); document.addEventListener('mouseup', end); document.addEventListener('touchmove', mv, { passive: false }); document.addEventListener('touchend', end) }
+            function mv(e) { e.preventDefault(); upd(pos(e)) }
+            function end() { document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', end); document.removeEventListener('touchmove', mv); document.removeEventListener('touchend', end) }
+            thumb.addEventListener('mousedown', start); thumb.addEventListener('touchstart', start, { passive: false });
+            track.addEventListener('mousedown', start); track.addEventListener('touchstart', start, { passive: false });
+        }
+        initSlider('r', 'thumbR', 'fillR', 'trackR', 'valR');
+        initSlider('g', 'thumbG', 'fillG', 'trackG', 'valG');
+        initSlider('b', 'thumbB', 'fillB', 'trackB', 'valB');
+
+        // 自爪の色ピッカー
+        document.getElementById('nailColorCircle').addEventListener('click', () => document.getElementById('nailColorPicker').click());
+        document.getElementById('nailColorPicker').addEventListener('input', e => {
+            currentNailHex = e.target.value;
+            currentNailRgb = hexToRgb(currentNailHex);
+            document.getElementById('nailColorCircle').style.backgroundColor = currentNailHex;
+            document.getElementById('nailColorHexLabel').textContent = currentNailHex.toUpperCase();
+            updateColorPreview();
+            updatePhotoPreviewCircles();
+        });
+
+        // ============================================================
+        // 写真タブ
+        // ============================================================
+        const photoDrop = document.getElementById('photoDrop');
+        const photoInput = document.getElementById('photoInput');
+        const photoCanvas = document.getElementById('photoCanvas');
+        const photoPreview = document.getElementById('photoPreview');
+        photoDrop.addEventListener('click', () => photoInput.click());
+        photoInput.addEventListener('change', e => { if (e.target.files[0]) loadPhoto(e.target.files[0]) });
+
+        function loadPhoto(file) {
+            const reader = new FileReader();
+            reader.onload = e => {
+                const img = new Image();
+                img.onload = () => {
+                    photoCanvas.width = img.width; photoCanvas.height = img.height;
+                    photoCanvas.getContext('2d').drawImage(img, 0, 0);
+                    photoPreview.src = e.target.result;
+                    photoExtractedRgb = null;
+                    document.getElementById('photoExtracted').style.display = 'none';
+                    document.getElementById('photoResults').style.display = 'none';
+                    document.getElementById('photoPreviewWrap').style.display = 'block';
+                    photoDrop.style.display = 'none';
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        photoPreview.addEventListener('click', e => {
+            const rect = photoPreview.getBoundingClientRect();
+            const sx = photoCanvas.width / rect.width, sy = photoCanvas.height / rect.height;
+            const cx = Math.round((e.clientX - rect.left) * sx), cy = Math.round((e.clientY - rect.top) * sy);
+            const ctx = photoCanvas.getContext('2d'); let tr = 0, tg = 0, tb = 0, cnt = 0;
+            for (let dy = -3; dy <= 3; dy++)for (let dx = -3; dx <= 3; dx++) {
+                const d = ctx.getImageData(clamp(cx + dx, 0, photoCanvas.width - 1), clamp(cy + dy, 0, photoCanvas.height - 1), 1, 1).data;
+                tr += d[0]; tg += d[1]; tb += d[2]; cnt++;
+            }
+            photoExtractedRgb = { r: Math.round(tr / cnt), g: Math.round(tg / cnt), b: Math.round(tb / cnt) };
+            const hex = rgbToHex(photoExtractedRgb.r, photoExtractedRgb.g, photoExtractedRgb.b);
+            document.getElementById('photoExtractedSwatch').style.backgroundColor = hex;
+            document.getElementById('photoExtractedHex').textContent = hex.toUpperCase();
+            document.getElementById('photoExtracted').style.display = 'block';
+            updatePhotoPreviewCircles();
+            document.getElementById('photoResults').style.display = 'none';
+        });
+
+        function updatePhotoPreviewCircles() {
+            if (!photoExtractedRgb) return;
+            const el = document.getElementById('photoPreviewCircles');
+            if (el) el.innerHTML = circlesHtml(photoExtractedRgb);
+        }
+
+        function resetPhotoFull() {
+            document.getElementById('photoPreviewWrap').style.display = 'none';
+            photoDrop.style.display = 'block';
+            document.getElementById('photoExtracted').style.display = 'none';
+            document.getElementById('photoResults').style.display = 'none';
+            photoExtractedRgb = null;
+        }
+
+        // ============================================================
+        // 検索・結果レンダリング
+        // ============================================================
+        function searchFromColor() {
+            doSearch({ r: sliderValues.r, g: sliderValues.g, b: sliderValues.b }, 'colorResults');
+        }
+        function searchFromPhoto() {
+            if (photoExtractedRgb) doSearch(photoExtractedRgb, 'photoResults');
+        }
+
+        function doSearch(idealRgb, resultDivId) {
+            const polishRgb = calcTargetPolish(idealRgb);
+            const idealHex = rgbToHex(idealRgb.r, idealRgb.g, idealRgb.b);
+            const polishHex = rgbToHex(polishRgb.r, polishRgb.g, polishRgb.b);
+            const coatLabel = opacityMode === '2' ? '2度塗り' : '1度塗り';
+
+            // DBから：逆算したポリッシュ色に最も近い商品を探す
+            const matches = NAIL_DB.map(item => {
+                const itemRgb = hexToRgb(item.color);
+                const score = calcMatch(polishRgb, itemRgb);
+                const simResult = simulateNail(itemRgb);
+                return { ...item, score, simHex: rgbToHex(simResult.r, simResult.g, simResult.b) };
+            }).sort((a, b) => b.score - a.score).slice(0, 5);
+
+            const div = document.getElementById(resultDivId);
+
+            // 逆算結果サマリー
+            let html = `<div class="card mb-4">
+    <div class="text-center mb-5">
+      <p class="text-[9px] font-sans-jp jp mb-1" style="color:rgba(140,109,130,0.4)">この仕上がり色にするには（${coatLabel}の場合）</p>
+    </div>
+    <div class="flex items-center justify-center gap-4 mb-5">
+      <div class="flex flex-col items-center gap-2">
+        <div class="sim-circle" style="background:${currentNailHex}"></div>
+        <span class="text-[8px] font-sans-jp" style="color:rgba(140,109,130,0.45)">自爪</span>
+      </div>
+      <span class="material-symbols-outlined text-sm" style="color:rgba(140,109,130,0.25)">add</span>
+      <div class="flex flex-col items-center gap-2">
+        <div class="sim-circle" style="background:${polishHex}"></div>
+        <span class="text-[8px] font-sans-jp" style="color:rgba(140,109,130,0.5)">選ぶべき色</span>
+      </div>
+      <span class="material-symbols-outlined text-sm" style="color:rgba(140,109,130,0.25)">arrow_forward</span>
+      <div class="flex flex-col items-center gap-2">
+        <div class="sim-circle" style="background:${idealHex}"></div>
+        <span class="text-[8px] font-sans-jp font-medium" style="color:#7D4A6A">理想の仕上がり</span>
+      </div>
+    </div>
+    <div class="text-center pt-4" style="border-top:1px solid rgba(140,109,130,0.1)">
+      <p class="text-[11px] font-sans tracking-widest font-medium" style="color:#7D4A6A">${polishHex.toUpperCase()}</p>
+      <p class="text-[8px] font-sans-jp mt-1" style="color:rgba(140,109,130,0.35)">目安となるポリッシュのカラーコード</p>
+    </div>
+  </div>`;
+
+            // ポリッシュ一覧
+            if (matches.length === 0) {
+                html += `<div class="card text-center py-8">
+      <span class="material-symbols-outlined text-3xl block mb-3" style="color:rgba(140,109,130,0.2)">nail_care</span>
+      <p class="text-[10px] font-sans-jp jp" style="color:rgba(140,109,130,0.35)">ポリッシュデータベース準備中</p>
+      <p class="text-[9px] font-sans-jp mt-2" style="color:rgba(140,109,130,0.25)">近日公開予定です</p>
+    </div>`;
+            } else {
+                html += `<h3 class="text-[11px] font-sans-jp font-medium mb-3 px-2 jp" style="color:#2D1A28">Top 5 マッチ</h3>`;
+                matches.forEach((item, i) => {
+                    const q = getQoo10(item.brand, item.name);
+                    const a = getAmazon(item.brand, item.price);
+                    let shopHtml = '';
+                    if (q || a) { shopHtml = '<div class="flex gap-1.5 mt-3">'; if (q) shopHtml += `<a href="${q}" target="_blank" rel="noopener" class="shop-btn shop-btn-qoo">Qoo10</a>`; if (a) shopHtml += `<a href="${a}" target="_blank" rel="noopener" class="shop-btn shop-btn-amz">Amazon</a>`; shopHtml += '</div>'; }
+                    html += `<div class="result-card fade-in" style="animation-delay:${i * 0.06}s">
+        <div class="flex items-start gap-4">
+          <div class="flex flex-col items-center gap-1 flex-shrink-0">
+            <div class="sim-circle" style="background:${item.color};width:40px;height:40px"></div>
+            <span class="text-[7px] font-sans-jp" style="color:rgba(140,109,130,0.4)">チップ</span>
+          </div>
+          <span class="material-symbols-outlined text-xs self-center mb-4" style="color:rgba(140,109,130,0.2)">arrow_forward</span>
+          <div class="flex flex-col items-center gap-1 flex-shrink-0">
+            <div class="sim-circle" style="background:${item.simHex};width:40px;height:40px"></div>
+            <span class="text-[7px] font-sans-jp" style="color:#7D4A6A">塗ると</span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <span class="text-[9px]" style="color:rgba(140,109,130,0.45)">${item.brand}</span>
+            <p class="text-[12px] font-sans-jp font-medium leading-tight mb-2">${item.name}</p>
+            <div class="flex items-center gap-3"><div class="match-bar flex-1"><div class="match-fill" style="width:${item.score.toFixed(1)}%"></div></div><span class="text-[11px] font-sans font-medium" style="color:#7D4A6A">${item.score.toFixed(1)}%</span></div>
+            ${shopHtml}
+          </div>
+        </div>
+      </div>`;
+                });
+            }
+
+            div.innerHTML = html;
+            div.style.display = 'block';
+            setTimeout(() => div.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+        }
+
+        // アフィリエイトリンク
+        function getQoo10(brand, name) {
+            const M = { 'rom&nd': 'https://m.qoo10.jp/su/1459589137/Q177209338' };
+            return M[brand] || null;
+        }
+        function getAmazon(brand, name) {
+            return `https://www.amazon.co.jp/s?k=${encodeURIComponent(brand + ' ' + name)}&tag=oiwaraeru22-22`;
+        }
+
+        // ============================================================
+        // 多言語
+        // ============================================================
+        const T = {
+            ja: {
+                tabColor: '色から選ぶ', tabPhoto: '写真から選ぶ',
+                labelNailColor: '自爪の色', hintIdealColor: '理想の仕上がり色を選択',
+                coat1: '1度塗り', coat2: '2度塗り', previewTitle: 'この色にするには…',
+                searchBtn: 'この色のポリッシュを検索', otherPhoto: '別画像',
+                photoHint: '写真から理想のネイルカラーを抽出します',
+                photoDrop: 'タップして写真を選択', photoTap: '理想のネイルカラー部分をタップ',
+                labelExtracted: '抽出カラー', labelBase: '自爪', labelTarget: '選ぶべき色', labelIdeal: '理想の色',
+                resSummary: (cl) => `この仕上がり色にするには（${cl}の場合）`,
+                resHint: '目安となるポリッシュのカラーコード',
+                disclaimer: 'ネイルの透明感や色味によって実際の仕上がりは異なるため参考程度にご覧ください。表示色はデバイス設定や光により実物と異なる場合があります。',
+                dbWait: 'ポリッシュデータベース準備中', dbSoon: '近日公開予定です',
+                labelPolish: 'ポリッシュ', labelResult: '塗ると', matchTop5: '検索結果', labelGlitter: 'ラメ・パール等あり'
+            },
+            en: {
+                tabColor: 'From Color', tabPhoto: 'From Photo',
+                labelNailColor: 'Nail Base', hintIdealColor: 'Pick your ideal finish color',
+                coat1: '1 Coat', coat2: '2 Coats', previewTitle: 'To get this color...',
+                searchBtn: 'Find this nail polish', otherPhoto: 'Change Photo',
+                photoHint: 'Extract colors from your inspiration photo',
+                photoDrop: 'Tap to select a photo', photoTap: 'Tap on the ideal nail color',
+                labelExtracted: 'Extracted', labelBase: 'Base', labelTarget: 'Pick this', labelIdeal: 'Result',
+                resSummary: (cl) => `To achieve this finish (${cl})`,
+                resHint: 'Estimated polish color code',
+                disclaimer: 'The actual finish may vary based on nail transparency and hue—please use as a reference. Colors may differ depending on device settings and lighting.',
+                dbWait: 'Polish database preparing', dbSoon: 'Coming soon',
+                labelPolish: 'Polish', labelResult: 'Finish', matchTop5: 'Recommended Polishes Top 5', labelGlitter: 'Contains Glitter/Pearl'
+            },
+            ko: {
+                tabColor: '색상에서 찾기', tabPhoto: '사진에서 찾기',
+                labelNailColor: '생손톱 색상', hintIdealColor: '이상적인 마무리를 선택하세요',
+                coat1: '1번 바름', coat2: '2번 바름', previewTitle: '이 색상이 되려면...',
+                searchBtn: '이 색상의 네일 찾기', otherPhoto: '다른 사진',
+                photoHint: '사진에서 네일 컬러를 추출합니다',
+                photoDrop: '탭하여 사진 선택', photoTap: '원하는 컬러 부분을 탭하세요',
+                labelExtracted: '추출된 색상', labelBase: '베이스', labelTarget: '선택할 색상', labelIdeal: '목표 색상',
+                resSummary: (cl) => `이 마무리가 되려면 (${cl} 시)`,
+                resHint: '참고용 폴리쉬 컬러 코드',
+                disclaimer: '네일의 투명도나 색감에 따라 실제 결과가 다를 수 있으니 참고용으로만 확인해 주세요. 기기 설정이나 조명에 따라 실제 색상과 차이가 있을 수 있습니다.',
+                dbWait: '폴리쉬 데이터베이스 준비 중', dbSoon: '곧 공개됩니다',
+                labelPolish: '폴리쉬', labelResult: '결과', matchTop5: '추천 폴리쉬 Top 5', labelGlitter: '글리터/펄 포함'
+            }
+        };
+
+        let currentLang = 'ja';
+        function setLang(lang) {
+            currentLang = lang;
+            const t = T[lang];
+
+            // UI Update
+            document.querySelectorAll('.t-tab-color').forEach(el => el.textContent = t.tabColor);
+            document.querySelectorAll('.t-tab-photo').forEach(el => el.textContent = t.tabPhoto);
+            document.querySelectorAll('.t-label-nail-color').forEach(el => el.textContent = t.labelNailColor);
+            document.querySelectorAll('.t-hint-ideal-color').forEach(el => el.textContent = t.hintIdealColor);
+            document.querySelectorAll('.t-coat-1').forEach(el => el.textContent = t.coat1);
+            document.querySelectorAll('.t-coat-2').forEach(el => el.forEach ? null : el.textContent = t.coat2); // Multi-fix
+            // Workaround for multiple coat buttons
+            document.getElementById('btn1coat').textContent = t.coat1;
+            document.getElementById('btn2coat').textContent = t.coat2;
+            if (document.getElementById('pbtn1coat')) document.getElementById('pbtn1coat').textContent = t.coat1;
+            if (document.getElementById('pbtn2coat')) document.getElementById('pbtn2coat').textContent = t.coat2;
+
+            document.querySelectorAll('.t-preview-title').forEach(el => el.textContent = t.previewTitle);
+            document.querySelectorAll('.t-search-btn').forEach(el => el.textContent = t.searchBtn);
+            document.querySelectorAll('.t-photo-hint').forEach(el => el.textContent = t.photoHint);
+            document.querySelectorAll('.t-photo-drop').forEach(el => el.textContent = t.photoDrop);
+            document.querySelectorAll('.t-photo-tap').forEach(el => el.textContent = t.photoTap);
+            document.querySelectorAll('.t-label-extracted').forEach(el => el.textContent = t.labelExtracted);
+            document.querySelectorAll('.t-other-photo').forEach(el => el.textContent = t.otherPhoto);
+            document.querySelectorAll('.t-disclaimer').forEach(el => el.textContent = t.disclaimer);
+
+            // Switcher style
+            ['ja', 'en', 'ko'].forEach(l => {
+                const btn = document.getElementById('lb' + l);
+                if (btn) {
+                    btn.style.color = (l === lang) ? '#7D4A6A' : 'rgba(140,109,130,0.5)';
+                    btn.className = 'px-2 text-[10px] transition-all ' + (l === lang ? 'font-medium' : 'font-light');
+                }
+            });
+
+            updateColorPreview();
+            updatePhotoPreviewCircles();
+
+            // Clear results if any
+            document.getElementById('colorResults').innerHTML = '';
+            document.getElementById('colorResults').style.display = 'none';
+            document.getElementById('photoResults').innerHTML = '';
+            document.getElementById('photoResults').style.display = 'none';
+        }
+
+        // circlesHtml updated for translations
+        function circlesHtml(idealRgb) {
+            const polishRgb = calcTargetPolish(idealRgb);
+            const nHex = currentNailHex;
+            const iHex = rgbToHex(idealRgb.r, idealRgb.g, idealRgb.b);
+            const pHex = rgbToHex(polishRgb.r, polishRgb.g, polishRgb.b);
+            const t = T[currentLang];
+            return `<div class="flex flex-col items-center gap-2">
+    <div class="sim-circle" style="background:${nHex}"></div>
+    <span class="text-[8px] font-sans-jp" style="color:rgba(140,109,130,0.45)">${t.labelBase}</span>
+  </div>
+  <span class="material-symbols-outlined text-sm mb-4" style="color:rgba(140,109,130,0.25)">add</span>
+  <div class="flex flex-col items-center gap-2">
+    <div class="sim-circle" style="background:${pHex}"></div>
+    <span class="text-[8px] font-sans-jp" style="color:rgba(140,109,130,0.5)">${t.labelTarget}</span>
+  </div>
+  <span class="material-symbols-outlined text-sm mb-4" style="color:rgba(140,109,130,0.25)">arrow_forward</span>
+  <div class="flex flex-col items-center gap-2">
+    <div class="sim-circle" style="background:${iHex}"></div>
+    <span class="text-[8px] font-sans-jp font-medium" style="color:#7D4A6A">${t.labelIdeal}</span>
+  </div>`;
+        }
+
+        // doSearch updated for translations
+        function doSearch(idealRgb, resultDivId) {
+            const polishRgb = calcTargetPolish(idealRgb);
+            const idealHex = rgbToHex(idealRgb.r, idealRgb.g, idealRgb.b);
+            const polishHex = rgbToHex(polishRgb.r, polishRgb.g, polishRgb.b);
+            const t = T[currentLang];
+            const coatLabel = opacityMode === '2' ? t.coat2 : t.coat1;
+
+            const matches = NAIL_DB.map(item => {
+                const itemRgb = hexToRgb(item.color);
+                const score = calcMatch(polishRgb, itemRgb);
+                const simResult = simulateNail(itemRgb);
+                return { ...item, score, simHex: rgbToHex(simResult.r, simResult.g, simResult.b) };
+            }).sort((a, b) => b.score - a.score).slice(0, 5);
+
+            const div = document.getElementById(resultDivId);
+
+            let html = `<div class="card mb-4">
+    <div class="text-center mb-5">
+      <p class="text-[9px] font-sans-jp jp mb-1" style="color:rgba(140,109,130,0.4)">${t.resSummary(coatLabel)}</p>
+    </div>
+    <div class="flex items-center justify-center gap-4 mb-5">
+      <div class="flex flex-col items-center gap-2">
+        <div class="sim-circle" style="background:${currentNailHex}"></div>
+        <span class="text-[8px] font-sans-jp" style="color:rgba(140,109,130,0.45)">${t.labelBase}</span>
+      </div>
+      <span class="material-symbols-outlined text-sm" style="color:rgba(140,109,130,0.25)">add</span>
+      <div class="flex flex-col items-center gap-2">
+        <div class="sim-circle" style="background:${polishHex}"></div>
+        <span class="text-[8px] font-sans-jp" style="color:rgba(140,109,130,0.5)">${t.labelTarget}</span>
+      </div>
+      <span class="material-symbols-outlined text-sm" style="color:rgba(140,109,130,0.25)">arrow_forward</span>
+      <div class="flex flex-col items-center gap-2">
+        <div class="sim-circle" style="background:${idealHex}"></div>
+        <span class="text-[8px] font-sans-jp font-medium" style="color:#7D4A6A">${t.labelIdeal}</span>
+      </div>
+    </div>
+    <div class="text-center pt-4" style="border-top:1px solid rgba(140,109,130,0.1)">
+      <p class="text-[11px] font-sans tracking-widest font-medium" style="color:#7D4A6A">${polishHex.toUpperCase()}</p>
+      <p class="text-[8px] font-sans-jp mt-1" style="color:rgba(140,109,130,0.35)">${t.resHint}</p>
+    </div>
+  </div>`;
+
+            if (matches.length === 0) {
+                html += `<div class="card text-center py-8">
+      <span class="material-symbols-outlined text-3xl block mb-3" style="color:rgba(140,109,130,0.2)">nail_care</span>
+      <p class="text-[10px] font-sans-jp jp" style="color:rgba(140,109,130,0.35)">${t.dbWait}</p>
+      <p class="text-[9px] font-sans-jp mt-2" style="color:rgba(140,109,130,0.25)">${t.dbSoon}</p>
+    </div>`;
+            } else {
+                html += `<h3 class="text-[11px] font-sans-jp font-medium mb-3 px-2 jp" style="color:#2D1A28">${t.matchTop5}</h3>`;
+                matches.forEach((item, i) => {
+                    const q = getQoo10(item.brand, item.name);
+                    const a = getAmazon(item.brand, item.price);
+                    let shopHtml = '';
+                    if (q || a) { shopHtml = '<div class="flex gap-1.5 mt-3">'; if (q) shopHtml += `<a href="${q}" target="_blank" rel="noopener" class="shop-btn shop-btn-qoo">Qoo10</a>`; if (a) shopHtml += `<a href="${a}" target="_blank" rel="noopener" class="shop-btn shop-btn-amz">Amazon</a>`; shopHtml += '</div>'; }
+                    const glitterHtml = item.glitter ? `<span class="ml-2 text-[10px] text-gray-400 font-normal">${t.labelGlitter}</span>` : '';
+                    html += `<div class="result-card fade-in" style="animation-delay:${i * 0.06}s">
+        <div class="flex items-start gap-4">
+          <div class="flex flex-col items-center gap-1 flex-shrink-0">
+            <div class="sim-circle" style="background:${item.color};width:40px;height:40px"></div>
+            <span class="text-[7px] font-sans-jp" style="color:rgba(140,109,130,0.4)">${t.labelPolish}</span>
+          </div>
+          <span class="material-symbols-outlined text-xs self-center mb-4" style="color:rgba(140,109,130,0.2)">arrow_forward</span>
+          <div class="flex flex-col items-center gap-1 flex-shrink-0">
+            <div class="sim-circle" style="background:${item.simHex};width:40px;height:40px"></div>
+            <span class="text-[7px] font-sans-jp" style="color:#7D4A6A">${t.labelResult}</span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <span class="text-[9px]" style="color:rgba(140,109,130,0.45)">${item.brand}</span>
+            <p class="text-[12px] font-sans-jp font-medium leading-tight mb-2">${item.name}${glitterHtml}</p>
+            <div class="flex items-center gap-3"><div class="match-bar flex-1"><div class="match-fill" style="width:${item.score.toFixed(1)}%"></div></div><span class="text-[11px] font-sans font-medium" style="color:#7D4A6A">${item.score.toFixed(1)}%</span></div>
+            ${shopHtml}
+          </div>
+        </div>
+      </div>`;
+                });
+            }
+
+            div.innerHTML = html;
+            div.style.display = 'block';
+            setTimeout(() => div.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+        }
+
+        // 初期化
+        updateColorPreview();
+    </script>
+</body>
+
+</html>
