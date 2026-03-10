@@ -276,6 +276,8 @@
                         style="color:rgba(140,109,130,0.6)">理想の仕上がり色を選択</p>
                     <input type="color" id="nativePicker" value="#D4A0B8" class="opacity-0 absolute w-0 h-0">
                 </div>
+                <!-- カラーチャート -->
+                <div id="color-circles" class="flex flex-wrap justify-center gap-3 mb-10 px-2"></div>
                 <!-- RGB -->
                 <div class="space-y-8 px-4 mb-10">
                     <div class="flex items-center gap-6"><span class="text-[10px] font-serif-en w-4"
@@ -575,10 +577,12 @@
             const rgb = hexToRgb(e.target.value);
             sliderValues.r = rgb.r; sliderValues.g = rgb.g; sliderValues.b = rgb.b;
             ['r', 'g', 'b'].forEach(c => {
-                const pct = (sliderValues[c] / 255 * 100).toFixed(1) + '%';
-                document.getElementById('fill' + c.toUpperCase()).style.width = pct;
-                document.getElementById('thumb' + c.toUpperCase()).style.left = pct;
-                document.getElementById('val' + c.toUpperCase()).textContent = sliderValues[c];
+                const v = sliderValues[c];
+                const pct = (v / 255 * 100).toFixed(1) + '%';
+                const uc = c.toUpperCase();
+                document.getElementById('fill' + uc).style.width = pct;
+                document.getElementById('thumb' + uc).style.left = pct;
+                document.getElementById('val' + uc).textContent = v;
             });
             syncColorPreview();
         });
